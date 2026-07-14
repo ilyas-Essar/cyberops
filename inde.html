@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#020605" />
+  <meta
+    name="description"
+    content="A cinematic cybersecurity landing page with a simulated global attack map."
+  />
+  <title>N0X Grid — Cyber Operations</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            inter: ["Inter", "sans-serif"],
+            playfair: ['"Playfair Display"', "serif"],
+            mono: ['"IBM Plex Mono"', "monospace"],
+          },
+        },
+      },
+    };
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Inter:wght@200;300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,300;1,400&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --acid: #bdff00;
+      --cyan: #5cf7ff;
+      --danger: #ff3d59;
+      --ink: #020605;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: var(--ink);
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+      color: #fff;
+      font-family: "Inter", sans-serif;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    ::selection {
+      color: #020605;
+      background: var(--acid);
+    }
+
+    .background-stage {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 28% 48%, rgba(26, 93, 70, 0.15), transparent 28%),
+        radial-gradient(circle at 77% 42%, rgba(31, 87, 98, 0.13), transparent 30%),
+        #020605;
+    }
+
+    .background-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 7;
+      pointer-events: none;
+      background:
+        linear-gradient(
+          to right,
+          rgba(0, 0, 0, 0.72) 0%,
+          rgba(0, 0, 0, 0.35) 38%,
+          rgba(0, 0, 0, 0.19) 65%,
+          rgba(0, 0, 0, 0.46) 100%
+        ),
+        linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0.25),
+          transparent 34%,
+          rgba(0, 0, 0, 0.42)
+        );
+    }
+
+    .background-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      pointer-events: none;
+      opacity: 0.2;
+      background-image:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.035) 0,
+          rgba(255, 255, 255, 0.035) 1px,
+          transparent 1px,
+          transparent 4px
+        );
+      mix-blend-mode: soft-light;
+    }
+
+    .grid-plane {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      opacity: 0.16;
+      background-image:
+        linear-gradient(rgba(92, 247, 255, 0.13) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(92, 247, 255, 0.13) 1px, transparent 1px);
+      background-size: 70px 70px;
+      transform: perspective(700px) rotateX(62deg) scale(1.3) translateY(30%);
+      transform-origin: center bottom;
+      mask-image: linear-gradient(to top, #000, transparent 80%);
+      -webkit-mask-image: linear-gradient(to top, #000, transparent 80%);
+      animation: gridDrift 18s linear infinite;
+    }
+
+    @keyframes gridDrift {
+      from { background-position: 0 0; }
+      to { background-position: 0 70px; }
+    }
+
+    #matrixCanvas,
+    #attackCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    #matrixCanvas {
+      z-index: 2;
+      opacity: 0.17;
+      mask-image: linear-gradient(to right, #000 0%, #000 46%, transparent 76%);
+      -webkit-mask-image: linear-gradient(to right, #000 0%, #000 46%, transparent 76%);
+    }
+
+    #attackCanvas {
+      z-index: 5;
+      opacity: 0.76;
+      mask-image: linear-gradient(to right, transparent 18%, #000 42%, #000 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 18%, #000 42%, #000 100%);
+    }
+
+    .hacker-scene {
+      position: absolute;
+      left: clamp(-160px, 3vw, 40px);
+      bottom: -3vh;
+      z-index: 3;
+      width: min(58vw, 810px);
+      height: min(82vh, 820px);
+      opacity: 0.76;
+      filter: drop-shadow(0 0 28px rgba(57, 255, 183, 0.08));
+      transform-origin: center bottom;
+      animation: sceneBreathe 6.5s ease-in-out infinite;
+    }
+
+    @keyframes sceneBreathe {
+      0%, 100% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1.006) translateY(-3px); }
+    }
+
+    .monitor-glow {
+      filter: drop-shadow(0 0 17px rgba(92, 247, 255, 0.26));
+    }
+
+    .hood-glow {
+      filter: drop-shadow(0 0 28px rgba(189, 255, 0, 0.1));
+    }
+
+    .screen-code line,
+    .screen-code path {
+      stroke-dasharray: 48 18;
+      animation: codeMove 4.2s linear infinite;
+    }
+
+    .screen-code .slow {
+      animation-duration: 7s;
+      animation-direction: reverse;
+    }
+
+    @keyframes codeMove {
+      to { stroke-dashoffset: -132; }
+    }
+
+    .terminal-feed {
+      position: absolute;
+      left: clamp(18px, 4vw, 70px);
+      top: 18%;
+      z-index: 4;
+      width: min(34vw, 450px);
+      color: rgba(167, 255, 199, 0.55);
+      font: 300 clamp(8px, 0.64vw, 11px) / 1.75 "IBM Plex Mono", monospace;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 10px rgba(77, 255, 157, 0.2);
+      pointer-events: none;
+      opacity: 0.64;
+      mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 82%, transparent);
+      -webkit-mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 82%, transparent);
+    }
+
+    .terminal-line {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      animation: terminalPulse 5s ease-in-out infinite;
+    }
+
+    @keyframes terminalPulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 0.88; }
+    }
+
+    .attack-caption {
+      position: absolute;
+      right: clamp(24px, 4vw, 72px);
+      top: clamp(90px, 16vh, 160px);
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: rgba(255,255,255,0.57);
+      font: 400 9px/1 "IBM Plex Mono", monospace;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .attack-caption::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      box-shadow: 0 0 12px var(--danger);
+      animation: livePulse 1.3s ease-in-out infinite;
+    }
+
+    @keyframes livePulse {
+      0%, 100% { opacity: 0.38; transform: scale(0.7); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    .structural-reveal {
+      opacity: 0;
+      transform: translateY(14px);
+      transition:
+        opacity 1s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .structural-reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .word-mask,
+    .line-mask {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: bottom;
+      padding-bottom: 0.08em;
+      margin-bottom: -0.08em;
+    }
+
+    .word-inner,
+    .line-inner {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(110%);
+      will-change: transform, opacity;
+      transition:
+        transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.65s ease;
+    }
+
+    .word-inner.is-visible,
+    .line-inner.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .title-shadow {
+      text-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.58),
+        0 0 40px rgba(92, 247, 255, 0.055);
+    }
+
+    .glass-panel {
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(10, 29, 28, 0.69),
+          rgba(4, 12, 13, 0.44)
+        );
+      border-top: 1px solid rgba(179, 255, 216, 0.34);
+      border-left: 1px solid rgba(179, 255, 216, 0.23);
+      box-shadow:
+        0 28px 85px rgba(0, 0, 0, 0.34),
+        inset 0 0 45px rgba(92, 247, 255, 0.025);
+      -webkit-backdrop-filter: blur(13px);
+      backdrop-filter: blur(13px);
+    }
+
+    .glass-panel::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -35%;
+      width: 32%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      animation: borderScan 5.4s ease-in-out infinite 2.4s;
+    }
+
+    @keyframes borderScan {
+      0%, 16% { left: -35%; opacity: 0; }
+      35% { opacity: 0.9; }
+      65% { left: 105%; opacity: 0.5; }
+      100% { left: 105%; opacity: 0; }
+    }
+
+    .nav-link {
+      position: relative;
+      display: inline-block;
+      color: rgba(255, 255, 255, 0.62);
+      transition: color 250ms ease;
+    }
+
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -0.35rem;
+      height: 1px;
+      background: var(--acid);
+      box-shadow: 0 0 10px rgba(189, 255, 0, 0.45);
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .nav-link:hover,
+    .nav-link:focus-visible {
+      color: #fff;
+    }
+
+    .nav-link:hover::after,
+    .nav-link:focus-visible::after {
+      transform: scaleX(1);
+    }
+
+    .equalizer {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      height: 12px;
+    }
+
+    .equalizer span {
+      display: block;
+      width: 1px;
+      height: 100%;
+      background: currentColor;
+      transform-origin: center;
+      animation: equalize 900ms ease-in-out infinite alternate;
+    }
+
+    .equalizer span:nth-child(2) { animation-duration: 610ms; animation-delay: -240ms; }
+    .equalizer span:nth-child(3) { animation-duration: 780ms; animation-delay: -420ms; }
+    .equalizer span:nth-child(4) { animation-duration: 540ms; animation-delay: -160ms; }
+    .equalizer span:nth-child(5) { animation-duration: 860ms; animation-delay: -360ms; }
+
+    .sound-button[aria-pressed="false"] .equalizer span {
+      animation-play-state: paused;
+      opacity: 0.58;
+      transform: scaleY(0.2);
+    }
+
+    @keyframes equalize {
+      0% { transform: scaleY(0.2); }
+      45% { transform: scaleY(0.95); }
+      100% { transform: scaleY(0.42); }
+    }
+
+    .cta-link {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+    }
+
+    .cta-link::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: var(--acid);
+      transform: translateX(-102%);
+      transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .cta-link:hover::before,
+    .cta-link:focus-visible::before {
+      transform: translateX(0);
+    }
+
+    .metric {
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 0.85rem;
+    }
+
+    .metric-value {
+      color: rgba(255,255,255,0.96);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+    }
+
+    .metric-label {
+      margin-top: 0.28rem;
+      color: rgba(255,255,255,0.42);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.46rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .live-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 999px;
+      background: var(--acid);
+      box-shadow: 0 0 11px var(--acid);
+      animation: livePulse 1.4s infinite;
+    }
+
+    @media (max-width: 1023px) {
+      .hacker-scene {
+        left: -18vw;
+        width: min(90vw, 720px);
+        opacity: 0.58;
+      }
+
+      #attackCanvas {
+        opacity: 0.55;
+      }
+
+      .terminal-feed {
+        display: none;
+      }
+
+      .attack-caption {
+        top: 105px;
+      }
+    }
+
+    @media (max-width: 639px) {
+      .hacker-scene {
+        left: -48vw;
+        bottom: 5vh;
+        width: 145vw;
+        height: 72vh;
+        opacity: 0.44;
+      }
+
+      #matrixCanvas {
+        opacity: 0.11;
+      }
+
+      #attackCanvas {
+        opacity: 0.42;
+        mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+      }
+
+      .attack-caption {
+        right: 24px;
+        top: 98px;
+        font-size: 7px;
+      }
+
+      .glass-panel {
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .structural-reveal,
+      .word-inner,
+      .line-inner {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="background-stage" aria-hidden="true">
+    <div class="grid-plane"></div>
+    <canvas id="matrixCanvas"></canvas>
+
+    <svg
+      class="hacker-scene"
+      viewBox="0 0 900 850"
+      role="presentation"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="screenFill" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="#092a2d" stop-opacity="0.96"/>
+          <stop offset="100%" stop-color="#020808" stop-opacity="0.98"/>
+        </linearGradient>
+        <linearGradient id="hoodFill" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="#172321"/>
+          <stop offset="55%" stop-color="#070c0b"/>
+          <stop offset="100%" stop-color="#010303"/>
+        </linearGradient>
+        <radialGradient id="faceShade" cx="50%" cy="42%" r="58%">
+          <stop offset="0%" stop-color="#0f2420"/>
+          <stop offset="75%" stop-color="#020504"/>
+          <stop offset="100%" stop-color="#000"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Monitor glow -->
+      <ellipse cx="425" cy="546" rx="360" ry="120" fill="#39ffaf" opacity="0.025"/>
+
+      <!-- Left monitor -->
+      <g class="monitor-glow" transform="translate(38 115) rotate(-4 192 145)">
+        <rect x="0" y="0" width="335" height="250" rx="8" fill="#010505" stroke="#5cf7ff" stroke-opacity="0.25"/>
+        <rect x="14" y="14" width="307" height="217" rx="3" fill="url(#screenFill)"/>
+        <path d="M168 250 L168 290 M110 290 H226" stroke="#172a29" stroke-width="12" stroke-linecap="round"/>
+        <g class="screen-code" stroke="#83ffbd" stroke-width="3" opacity="0.46">
+          <line x1="34" y1="48" x2="181" y2="48"/>
+          <line x1="34" y1="68" x2="264" y2="68" class="slow"/>
+          <line x1="34" y1="88" x2="222" y2="88"/>
+          <line x1="34" y1="118" x2="286" y2="118" class="slow"/>
+          <line x1="34" y1="138" x2="164" y2="138"/>
+          <line x1="34" y1="158" x2="248" y2="158"/>
+          <line x1="34" y1="188" x2="286" y2="188" class="slow"/>
+        </g>
+      </g>
+
+      <!-- Right monitor -->
+      <g class="monitor-glow" transform="translate(530 108) rotate(5 162 140)">
+        <rect x="0" y="0" width="320" height="240" rx="8" fill="#010505" stroke="#bdff00" stroke-opacity="0.18"/>
+        <rect x="14" y="14" width="292" height="207" rx="3" fill="url(#screenFill)"/>
+        <path d="M160 240 L160 282 M105 282 H215" stroke="#172a29" stroke-width="12" stroke-linecap="round"/>
+        <g class="screen-code" fill="none" stroke="#5cf7ff" stroke-width="2.5" opacity="0.42">
+          <path d="M35 168 C65 120, 103 153, 131 103 S194 140, 223 78 S267 103, 286 56"/>
+          <line x1="35" y1="47" x2="182" y2="47" class="slow"/>
+          <line x1="35" y1="67" x2="245" y2="67"/>
+          <line x1="35" y1="188" x2="157" y2="188"/>
+        </g>
+        <g opacity="0.46">
+          <circle cx="65" cy="124" r="6" fill="#ff3d59"/>
+          <circle cx="160" cy="113" r="5" fill="#bdff00"/>
+          <circle cx="251" cy="96" r="5" fill="#5cf7ff"/>
+        </g>
+      </g>
+
+      <!-- Hooded figure -->
+      <g class="hood-glow">
+        <path
+          d="M270 650 C276 529, 306 442, 360 398 C324 305, 348 205, 449 174 C552 198, 579 297, 542 393 C610 441, 642 527, 652 650 Z"
+          fill="url(#hoodFill)"
+          stroke="#8cffc8"
+          stroke-opacity="0.075"
+          stroke-width="2"
+        />
+        <path
+          d="M343 378 C323 291, 357 219, 449 195 C543 221, 574 296, 548 380 C522 344, 494 322, 450 317 C405 321, 374 342, 343 378 Z"
+          fill="#111c1a"
+          opacity="0.86"
+        />
+        <ellipse cx="450" cy="322" rx="81" ry="101" fill="url(#faceShade)"/>
+        <path d="M382 327 C399 311, 421 307, 438 316" stroke="#7cffb6" stroke-opacity="0.14" stroke-width="4" stroke-linecap="round"/>
+        <path d="M462 316 C482 307, 503 311, 520 328" stroke="#7cffb6" stroke-opacity="0.14" stroke-width="4" stroke-linecap="round"/>
+        <path d="M408 345 C424 352, 438 354, 450 354 C466 354, 481 351, 494 344" stroke="#5cf7ff" stroke-opacity="0.08" stroke-width="3"/>
+      </g>
+
+      <!-- Body / arms -->
+      <path d="M341 431 C294 470, 278 539, 279 633 L415 633 L430 483 Z" fill="#070c0b"/>
+      <path d="M555 430 C609 473, 625 541, 620 634 L485 634 L467 482 Z" fill="#060b0a"/>
+      <path d="M286 586 C336 558, 382 560, 430 602 L394 640 C348 623, 320 623, 275 648 Z" fill="#111a18"/>
+      <path d="M615 587 C566 558, 519 560, 470 602 L508 641 C553 624, 584 624, 629 648 Z" fill="#101917"/>
+
+      <!-- Hands / keyboard -->
+      <ellipse cx="397" cy="624" rx="48" ry="20" fill="#15231f"/>
+      <ellipse cx="505" cy="624" rx="48" ry="20" fill="#15231f"/>
+      <path d="M285 641 L619 641 L690 724 L215 724 Z" fill="#040707" stroke="#5cf7ff" stroke-opacity="0.1"/>
+      <path d="M300 658 H600 L626 699 H272 Z" fill="#08110f"/>
+      <g stroke="#70ffc0" stroke-opacity="0.13" stroke-width="3">
+        <line x1="302" y1="671" x2="601" y2="671"/>
+        <line x1="289" y1="686" x2="613" y2="686"/>
+        <line x1="328" y1="658" x2="313" y2="699"/>
+        <line x1="369" y1="658" x2="361" y2="699"/>
+        <line x1="410" y1="658" x2="407" y2="699"/>
+        <line x1="451" y1="658" x2="451" y2="699"/>
+        <line x1="492" y1="658" x2="497" y2="699"/>
+        <line x1="533" y1="658" x2="544" y2="699"/>
+        <line x1="574" y1="658" x2="592" y2="699"/>
+      </g>
+
+      <!-- Desk -->
+      <path d="M92 721 H811 L852 760 H48 Z" fill="#020404"/>
+      <rect x="63" y="758" width="770" height="25" rx="5" fill="#040706"/>
+    </svg>
+
+    <div id="terminalFeed" class="terminal-feed"></div>
+    <canvas id="attackCanvas"></canvas>
+    <div class="attack-caption">Global attack telemetry · simulation</div>
+  </div>
+
+  <main
+    class="relative z-10 flex min-h-screen min-h-[100dvh] w-full flex-col px-6 pb-[50px] pt-6 md:px-12 md:pt-10"
+  >
+    <header
+      id="siteHeader"
+      class="structural-reveal flex items-center justify-between gap-5"
+    >
+      <a
+        href="#"
+        class="flex shrink-0 items-baseline font-mono text-sm font-medium tracking-[0.18em] text-white md:text-base"
+        aria-label="Nox Grid home"
+      >
+        <span>N</span>
+        <span class="-mt-[0.12em] text-[1.15em] font-light leading-none text-[#bdff00]">0</span>
+        <span>X</span>
+        <span class="mx-1.5 text-white/32">//</span>
+        <span>GRID</span>
+      </a>
+
+      <nav
+        class="hidden items-center gap-3 font-mono text-[9px] font-light uppercase tracking-[0.16em] sm:flex md:gap-4 md:text-[10px]"
+        aria-label="Primary navigation"
+      >
+        <a class="nav-link" href="#intelligence">Intelligence</a>
+        <span class="text-white/25">/</span>
+        <a class="nav-link" href="#operations">Operations</a>
+        <span class="text-white/25">/</span>
+        <a class="nav-link" href="#research">Research</a>
+        <span class="text-white/25">/</span>
+        <a class="nav-link" href="#reports">Reports</a>
+        <span class="text-white/25">/</span>
+        <a class="nav-link" href="#contact">Contact</a>
+      </nav>
+
+      <button
+        id="soundToggle"
+        type="button"
+        aria-label="Turn ambient sound on"
+        aria-pressed="false"
+        class="sound-button flex shrink-0 items-center gap-2 border border-white/55 bg-white px-2.5 py-1.5 font-mono text-[7px] font-medium uppercase tracking-[0.16em] text-black transition hover:border-[#bdff00] hover:bg-[#bdff00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#bdff00]/80 md:px-3 md:text-[8px]"
+      >
+        <span id="soundLabel">ambient off</span>
+        <span class="equalizer" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </span>
+      </button>
+    </header>
+
+    <nav
+      id="mobileNav"
+      class="structural-reveal mt-6 flex items-center gap-3 font-mono text-[8px] font-light uppercase tracking-[0.15em] text-white/55 sm:hidden"
+      aria-label="Mobile navigation"
+    >
+      <a class="nav-link" href="#intelligence">Intel</a>
+      <span class="text-white/25">/</span>
+      <a class="nav-link" href="#operations">Operations</a>
+      <span class="text-white/25">/</span>
+      <a class="nav-link" href="#research">Research</a>
+    </nav>
+
+    <section class="flex flex-grow items-end" aria-labelledby="main-heading">
+      <div
+        class="grid w-full items-end gap-8 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,430px)] lg:gap-16 xl:grid-cols-[minmax(0,1fr)_440px]"
+      >
+        <div class="min-w-0">
+          <div
+            id="eyebrow"
+            class="structural-reveal mb-5 flex items-center gap-3 font-mono text-[8px] uppercase tracking-[0.24em] text-white/48 sm:text-[9px]"
+          >
+            <span class="live-dot"></span>
+            <span>Threat visibility without the noise</span>
+          </div>
+
+          <h1
+            id="main-heading"
+            class="title-shadow font-playfair text-[3.35rem] font-medium leading-[0.87] tracking-[-0.055em] text-white sm:text-[4.6rem] md:text-[5.5rem] lg:text-[6.15vw]"
+          >
+            <span class="reveal-word-line block">See the breach</span>
+            <span class="reveal-word-line block">before it begins</span>
+          </h1>
+        </div>
+
+        <aside
+          id="glassPanel"
+          class="glass-panel structural-reveal ml-auto w-full max-w-[440px] px-5 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7"
+        >
+          <div class="relative z-10 flex flex-col items-start gap-5">
+            <div class="flex w-full items-center justify-between">
+              <span class="font-mono text-[7px] uppercase tracking-[0.22em] text-[#bdff00]/78">
+                Active defense layer
+              </span>
+              <span class="font-mono text-[7px] uppercase tracking-[0.16em] text-white/35">
+                node 07
+              </span>
+            </div>
+
+            <h2
+              class="reveal-words font-playfair text-lg font-normal leading-[1.15] tracking-[-0.02em] text-white sm:text-xl"
+            >
+              A command layer for teams operating in hostile networks.
+            </h2>
+
+            <p
+              id="panelParagraph"
+              class="max-w-[17rem] font-inter text-xs font-light leading-[1.65] text-white/66"
+            >
+              <span class="reveal-line block">Detect the signal, trace the source,</span>
+              <span class="reveal-line block">and contain the threat before noise</span>
+              <span class="reveal-line block">becomes impact.</span>
+            </p>
+
+            <div class="grid w-full grid-cols-3 gap-4">
+              <div class="metric">
+                <div id="attackMetric" class="metric-value">04,812</div>
+                <div class="metric-label">events</div>
+              </div>
+              <div class="metric">
+                <div id="blockedMetric" class="metric-value">99.7%</div>
+                <div class="metric-label">blocked</div>
+              </div>
+              <div class="metric">
+                <div id="latencyMetric" class="metric-value">18ms</div>
+                <div class="metric-label">response</div>
+              </div>
+            </div>
+
+            <a
+              href="#operations"
+              class="cta-link inline-flex min-h-11 items-center bg-white px-5 py-2.5 font-playfair text-lg font-light italic text-black transition-transform duration-300 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#bdff00] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            >
+              <span class="reveal-words">(enter the grid)</span>
+            </a>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+      /* -----------------------------
+         Reveal animations
+      ------------------------------ */
+      const makeWordReveal = (element) => {
+        const text = element.textContent.trim();
+        element.textContent = "";
+
+        text.split(/\s+/).forEach((word, index, words) => {
+          const mask = document.createElement("span");
+          mask.className = "word-mask";
+
+          const inner = document.createElement("span");
+          inner.className = "word-inner";
+          inner.textContent = word;
+
+          mask.appendChild(inner);
+          element.appendChild(mask);
+
+          if (index < words.length - 1) {
+            element.appendChild(document.createTextNode(" "));
+          }
+        });
+      };
+
+      document
+        .querySelectorAll(".reveal-word-line, .reveal-words")
+        .forEach(makeWordReveal);
+
+      document.querySelectorAll(".reveal-line").forEach((line) => {
+        const text = line.textContent.trim();
+        line.textContent = "";
+
+        const mask = document.createElement("span");
+        mask.className = "line-mask";
+
+        const inner = document.createElement("span");
+        inner.className = "line-inner";
+        inner.textContent = text;
+
+        mask.appendChild(inner);
+        line.appendChild(mask);
+      });
+
+      const revealStructural = (selector, delay) => {
+        const element = document.querySelector(selector);
+        if (!element) return;
+
+        window.setTimeout(() => {
+          element.classList.add("is-visible");
+        }, reducedMotion ? 0 : delay);
+      };
+
+      const revealSequence = (selector, startDelay, stagger) => {
+        document.querySelectorAll(selector).forEach((item, index) => {
+          window.setTimeout(() => {
+            item.classList.add("is-visible");
+          }, reducedMotion ? 0 : startDelay + index * stagger);
+        });
+      };
+
+      revealStructural("#siteHeader", 100);
+      revealStructural("#mobileNav", 220);
+      revealStructural("#eyebrow", 420);
+      revealStructural("#glassPanel", 500);
+      revealSequence("#main-heading .word-inner", 650, 105);
+      revealSequence("#glassPanel h2 .word-inner", 1370, 72);
+      revealSequence("#panelParagraph .line-inner", 1990, 155);
+      revealSequence(".cta-link .word-inner", 2500, 92);
+
+      /* -----------------------------
+         Matrix background
+      ------------------------------ */
+      const matrixCanvas = document.getElementById("matrixCanvas");
+      const matrixCtx = matrixCanvas.getContext("2d");
+      let matrixColumns = [];
+      let matrixFontSize = 13;
+      const matrixChars =
+        "01ABCDEF<>/{}[]$#@%&*+-=NXGRIDTRACEBLOCKALLOWDENY";
+
+      function resizeMatrix() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        matrixCanvas.width = Math.floor(innerWidth * dpr);
+        matrixCanvas.height = Math.floor(innerHeight * dpr);
+        matrixCanvas.style.width = innerWidth + "px";
+        matrixCanvas.style.height = innerHeight + "px";
+        matrixCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        matrixFontSize = innerWidth < 640 ? 11 : 13;
+        const count = Math.ceil(innerWidth / matrixFontSize);
+        matrixColumns = Array.from(
+          { length: count },
+          () => Math.random() * (-innerHeight / matrixFontSize)
+        );
+      }
+
+      function drawMatrix() {
+        matrixCtx.fillStyle = "rgba(2, 6, 5, 0.075)";
+        matrixCtx.fillRect(0, 0, innerWidth, innerHeight);
+        matrixCtx.font = `${matrixFontSize}px "IBM Plex Mono", monospace`;
+
+        matrixColumns.forEach((drop, index) => {
+          const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+          const x = index * matrixFontSize;
+          const y = drop * matrixFontSize;
+
+          matrixCtx.fillStyle =
+            Math.random() > 0.985
+              ? "rgba(189,255,0,0.9)"
+              : "rgba(91,255,174,0.5)";
+          matrixCtx.fillText(char, x, y);
+
+          matrixColumns[index] =
+            y > innerHeight && Math.random() > 0.975
+              ? Math.random() * -30
+              : drop + 0.42;
+        });
+
+        if (!reducedMotion) requestAnimationFrame(drawMatrix);
+      }
+
+      resizeMatrix();
+      if (!reducedMotion) drawMatrix();
+
+      /* -----------------------------
+         Simulated global attack map
+      ------------------------------ */
+      const attackCanvas = document.getElementById("attackCanvas");
+      const ctx = attackCanvas.getContext("2d");
+      let cw = 0;
+      let ch = 0;
+      let attacks = [];
+      let spawnTimer = 0;
+
+      const continents = [
+        // North America
+        [[0.07,0.31],[0.12,0.23],[0.20,0.21],[0.26,0.27],[0.24,0.35],[0.19,0.38],[0.16,0.47],[0.12,0.43],[0.10,0.36]],
+        // South America
+        [[0.25,0.47],[0.30,0.50],[0.32,0.60],[0.29,0.74],[0.25,0.84],[0.22,0.71],[0.21,0.57]],
+        // Europe
+        [[0.44,0.29],[0.49,0.25],[0.54,0.28],[0.53,0.35],[0.47,0.36]],
+        // Africa
+        [[0.45,0.40],[0.54,0.39],[0.58,0.51],[0.54,0.69],[0.48,0.70],[0.43,0.55]],
+        // Asia
+        [[0.55,0.27],[0.64,0.22],[0.76,0.25],[0.86,0.34],[0.82,0.46],[0.70,0.43],[0.62,0.50],[0.54,0.38]],
+        // Australia
+        [[0.76,0.63],[0.84,0.61],[0.89,0.69],[0.86,0.78],[0.78,0.76]]
+      ];
+
+      const nodes = [
+        { x: 0.14, y: 0.34, name: "VAN" },
+        { x: 0.20, y: 0.38, name: "NYC" },
+        { x: 0.26, y: 0.64, name: "SAO" },
+        { x: 0.47, y: 0.32, name: "LON" },
+        { x: 0.51, y: 0.34, name: "FRA" },
+        { x: 0.51, y: 0.51, name: "LOS" },
+        { x: 0.62, y: 0.33, name: "DXB" },
+        { x: 0.72, y: 0.37, name: "DEL" },
+        { x: 0.81, y: 0.42, name: "SIN" },
+        { x: 0.86, y: 0.31, name: "TYO" },
+        { x: 0.84, y: 0.69, name: "SYD" }
+      ];
+
+      const defended = [1, 3, 4, 8, 9];
+
+      function resizeAttackCanvas() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        cw = innerWidth;
+        ch = innerHeight;
+        attackCanvas.width = Math.floor(cw * dpr);
+        attackCanvas.height = Math.floor(ch * dpr);
+        attackCanvas.style.width = cw + "px";
+        attackCanvas.style.height = ch + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function mapPoint(point) {
+        const mapWidth = cw * (cw < 720 ? 1.08 : 0.68);
+        const mapHeight = ch * (cw < 720 ? 0.54 : 0.62);
+        const offsetX = cw < 720 ? -cw * 0.03 : cw * 0.31;
+        const offsetY = cw < 720 ? ch * 0.17 : ch * 0.13;
+        return {
+          x: offsetX + point.x * mapWidth,
+          y: offsetY + point.y * mapHeight
+        };
+      }
+
+      function drawMap() {
+        ctx.save();
+        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = "rgba(111, 241, 221, 0.22)";
+        ctx.fillStyle = "rgba(17, 86, 79, 0.055)";
+        ctx.setLineDash([2, 5]);
+
+        continents.forEach((polygon) => {
+          ctx.beginPath();
+          polygon.forEach((p, i) => {
+            const point = mapPoint({ x: p[0], y: p[1] });
+            if (i === 0) ctx.moveTo(point.x, point.y);
+            else ctx.lineTo(point.x, point.y);
+          });
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        });
+
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      function createAttack() {
+        let sourceIndex = Math.floor(Math.random() * nodes.length);
+        let targetIndex = defended[Math.floor(Math.random() * defended.length)];
+
+        if (sourceIndex === targetIndex) {
+          sourceIndex = (sourceIndex + 3) % nodes.length;
+        }
+
+        attacks.push({
+          source: nodes[sourceIndex],
+          target: nodes[targetIndex],
+          progress: 0,
+          speed: 0.004 + Math.random() * 0.0045,
+          width: 0.65 + Math.random() * 0.9,
+          danger: Math.random() > 0.24,
+          seed: Math.random() * Math.PI * 2
+        });
+
+        if (attacks.length > 38) attacks.shift();
+      }
+
+      function bezierPoint(p0, p1, p2, t) {
+        const inv = 1 - t;
+        return {
+          x: inv * inv * p0.x + 2 * inv * t * p1.x + t * t * p2.x,
+          y: inv * inv * p0.y + 2 * inv * t * p1.y + t * t * p2.y
+        };
+      }
+
+      function drawNodes(time) {
+        nodes.forEach((node, index) => {
+          const p = mapPoint(node);
+          const protectedNode = defended.includes(index);
+          const pulse = 1 + Math.sin(time * 0.0025 + index) * 0.3;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, protectedNode ? 3.2 * pulse : 2, 0, Math.PI * 2);
+          ctx.fillStyle = protectedNode
+            ? "rgba(189,255,0,0.82)"
+            : "rgba(92,247,255,0.45)";
+          ctx.fill();
+
+          if (protectedNode) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 8.5 * pulse, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(189,255,0,0.16)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+
+          if (cw > 900) {
+            ctx.fillStyle = "rgba(255,255,255,0.31)";
+            ctx.font = '7px "IBM Plex Mono", monospace';
+            ctx.fillText(node.name, p.x + 8, p.y - 7);
+          }
+        });
+      }
+
+      function drawAttack(attack) {
+        const start = mapPoint(attack.source);
+        const end = mapPoint(attack.target);
+        const mid = {
+          x: (start.x + end.x) / 2,
+          y:
+            Math.min(start.y, end.y) -
+            Math.max(36, Math.abs(end.x - start.x) * 0.18)
+        };
+
+        ctx.beginPath();
+        ctx.moveTo(start.x, start.y);
+        ctx.quadraticCurveTo(mid.x, mid.y, end.x, end.y);
+        ctx.strokeStyle = attack.danger
+          ? "rgba(255,61,89,0.16)"
+          : "rgba(92,247,255,0.13)";
+        ctx.lineWidth = attack.width;
+        ctx.stroke();
+
+        const pulse = bezierPoint(start, mid, end, attack.progress);
+        const glowColor = attack.danger ? "255,61,89" : "92,247,255";
+
+        ctx.beginPath();
+        ctx.arc(pulse.x, pulse.y, 7, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${glowColor},0.06)`;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(pulse.x, pulse.y, 1.8, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${glowColor},0.92)`;
+        ctx.fill();
+
+        attack.progress += attack.speed;
+      }
+
+      function animateAttackMap(time = 0) {
+        ctx.clearRect(0, 0, cw, ch);
+        drawMap();
+        drawNodes(time);
+
+        spawnTimer++;
+        if (spawnTimer > 17) {
+          createAttack();
+          if (Math.random() > 0.55) createAttack();
+          spawnTimer = 0;
+        }
+
+        attacks.forEach(drawAttack);
+        attacks = attacks.filter((attack) => attack.progress <= 1.02);
+
+        if (!reducedMotion) requestAnimationFrame(animateAttackMap);
+      }
+
+      resizeAttackCanvas();
+      for (let i = 0; i < 18; i++) {
+        createAttack();
+        attacks[i].progress = Math.random();
+      }
+      animateAttackMap();
+
+      /* -----------------------------
+         Terminal activity
+      ------------------------------ */
+      const terminalFeed = document.getElementById("terminalFeed");
+      const terminalMessages = [
+        "[sensor-07] SYN anomaly observed · edge/ca-central",
+        "[mesh] rotating ephemeral detection keys",
+        "[waf] burst pattern classified · confidence 98.7%",
+        "[trace] origin correlation complete · 14 routes",
+        "[policy] rate-limit profile pushed to perimeter",
+        "[edr] process tree normalized · no lateral movement",
+        "[sinkhole] malicious resolver redirected",
+        "[intel] IOC graph enriched · campaign cluster 4A",
+        "[response] containment window 00:00:18",
+        "[status] protected assets remain available"
+      ];
+
+      function refreshTerminal() {
+        const shuffled = [...terminalMessages]
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 8);
+
+        terminalFeed.innerHTML = shuffled
+          .map(
+            (line, index) =>
+              `<div class="terminal-line" style="animation-delay:-${index * 0.43}s">${line}</div>`
+          )
+          .join("");
+      }
+
+      refreshTerminal();
+      setInterval(refreshTerminal, 5200);
+
+      /* -----------------------------
+         Metrics
+      ------------------------------ */
+      const attackMetric = document.getElementById("attackMetric");
+      const blockedMetric = document.getElementById("blockedMetric");
+      const latencyMetric = document.getElementById("latencyMetric");
+      let eventCount = 4812;
+
+      setInterval(() => {
+        eventCount += Math.floor(Math.random() * 8) + 1;
+        attackMetric.textContent = eventCount.toLocaleString("en-US").padStart(6, "0");
+        blockedMetric.textContent = `${(99.5 + Math.random() * 0.4).toFixed(1)}%`;
+        latencyMetric.textContent = `${Math.floor(14 + Math.random() * 9)}ms`;
+      }, 1800);
+
+      /* -----------------------------
+         Generated ambient audio
+         No external audio file.
+      ------------------------------ */
+      const soundToggle = document.getElementById("soundToggle");
+      const soundLabel = document.getElementById("soundLabel");
+      let audioContext = null;
+      let masterGain = null;
+      let oscillators = [];
+      let soundEnabled = false;
+
+      function createAmbientSound() {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return false;
+
+        audioContext = audioContext || new AudioCtx();
+
+        masterGain = audioContext.createGain();
+        masterGain.gain.value = 0.0001;
+        masterGain.connect(audioContext.destination);
+
+        const frequencies = [43, 57, 86];
+        oscillators = frequencies.map((frequency, index) => {
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          const filter = audioContext.createBiquadFilter();
+
+          oscillator.type = index === 0 ? "sine" : "triangle";
+          oscillator.frequency.value = frequency;
+          oscillator.detune.value = index * 4 - 3;
+
+          filter.type = "lowpass";
+          filter.frequency.value = 260 + index * 70;
+          gain.gain.value = index === 0 ? 0.11 : 0.025;
+
+          oscillator.connect(filter);
+          filter.connect(gain);
+          gain.connect(masterGain);
+          oscillator.start();
+
+          return oscillator;
+        });
+
+        return true;
+      }
+
+      function syncSoundUI() {
+        soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+        soundToggle.setAttribute(
+          "aria-label",
+          soundEnabled ? "Turn ambient sound off" : "Turn ambient sound on"
+        );
+        soundLabel.textContent = soundEnabled ? "ambient on" : "ambient off";
+      }
+
+      soundToggle.addEventListener("click", async () => {
+        if (!audioContext && !createAmbientSound()) return;
+
+        if (audioContext.state === "suspended") {
+          await audioContext.resume();
+        }
+
+        soundEnabled = !soundEnabled;
+        masterGain.gain.cancelScheduledValues(audioContext.currentTime);
+        masterGain.gain.exponentialRampToValueAtTime(
+          soundEnabled ? 0.105 : 0.0001,
+          audioContext.currentTime + 0.75
+        );
+
+        syncSoundUI();
+      });
+
+      syncSoundUI();
+
+      window.addEventListener("resize", () => {
+        resizeMatrix();
+        resizeAttackCanvas();
+      });
+    });
+  </script>
+</body>
+</html>
